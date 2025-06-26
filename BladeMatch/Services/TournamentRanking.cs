@@ -18,6 +18,12 @@ public class TournamentRanking
         {
             throw new Exception("No players found");
         }
+
+        foreach (var player in players)
+        {
+            player.Score = _scoreCalculator.CalculateScore(player.Matches);
+        }
+        
         players.Sort((a, b) => b.Score.CompareTo(a.Score));
         return players;
     }
@@ -30,8 +36,8 @@ public class TournamentRanking
         {
             throw new Exception("No players found");
         }
-        players.Sort((a, b) => b.Score.CompareTo(a.Score));
-        return players[0];
+        
+        return GetRanking(players)[0];
     }
 
 }
