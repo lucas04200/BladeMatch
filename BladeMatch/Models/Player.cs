@@ -8,10 +8,4 @@ public class Player
     public int Score { get; set; }
     public bool IsDisqualified { get; set; }
     public int PenaltyPoints { get; set; }
-
-    public void AddMatch(MatchResult match)
-    {
-        Matches.Add(match);
-    }
-    
 }
