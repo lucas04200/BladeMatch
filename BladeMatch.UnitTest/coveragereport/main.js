@@ -214,7 +214,7 @@ var assemblies = [
     "name": "BladeMatch",
     "classes": [
       { "name": "BladeMatch.Models.MatchResult", "rp": "BladeMatch_MatchResult.html", "cl": 5, "ucl": 1, "cal": 6, "tl": 17, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
-      { "name": "BladeMatch.Models.Player", "rp": "BladeMatch_Player.html", "cl": 3, "ucl": 7, "cal": 10, "tl": 17, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
+      { "name": "BladeMatch.Models.Player", "rp": "BladeMatch_Player.html", "cl": 7, "ucl": 5, "cal": 12, "tl": 10, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
       { "name": "BladeMatch.Services.ScoreCalculator", "rp": "BladeMatch_ScoreCalculator.html", "cl": 33, "ucl": 0, "cal": 33, "tl": 55, "cb": 22, "tb": 22, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
       { "name": "BladeMatch.Services.TournamentRanking", "rp": "BladeMatch_TournamentRanking.html", "cl": 21, "ucl": 0, "cal": 21, "tl": 43, "cb": 6, "tb": 6, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
       { "name": "Program", "rp": "BladeMatch_Program.html", "cl": 0, "ucl": 1, "cal": 1, "tl": 3, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
