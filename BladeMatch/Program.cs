@@ -72,5 +72,7 @@ class Program
         }
 
         Console.WriteLine($"\nChampion: {champion.Name} with {champion.Score} points");
+
+        Console.ReadLine();
     }
 }
