@@ -1,11 +1,13 @@
-﻿using System;
+﻿using BladeMatch.Models;
+using BladeMatch.Services;
+using FluentAssertions; 
+using Moq;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Moq;
 using Xunit;
-using FluentAssertions; 
 
 namespace BladeMatch.UnitTest
 {
@@ -13,7 +15,7 @@ namespace BladeMatch.UnitTest
     {
         private readonly ScoreCalculator _calculator;
 
-        public ScoreCalculatorTests()
+        public CalculTest()
         {
             _calculator = new ScoreCalculator();
         }
@@ -33,61 +35,90 @@ namespace BladeMatch.UnitTest
         [Theory]
         [MemberData(nameof(DataMatchesTest))]
         // Test sans bonus avec MemberData
-        public void Should_Calculate_Score_Without_Bonus() { }
+        public void CalculateScore_WithVariousInput(string[] results, int expectedScore)
+        {
+            var matches = results.Select(r => new MatchResult(
+                r switch
+                {
+                    "Win" => MatchResult.Result.Win,
+                    "Draw" => MatchResult.Result.Draw,
+                    "Loss" => MatchResult.Result.Loss,
+                    _ => throw new ArgumentException("Invalid result")
+                }
+            )).ToList();
 
-        [Fact]
-        // Test avec que des victoires sans bonus
-        public void Should_Calculate_Score_With_Two_Wins() { }
-
-        [Fact]
-        // Test avec que des nulls
-        public void Should_Return_Three_When_No_Results() { }
-        
-        [Fact]
-        // Test avec que des défaites 
-        public void Should_Return_Zero_When_All_Losses() { }
-        
-        // Tests avec données paramétrées 
-        [Theory]
-        [InlineData(new[] { "Win", "Win", "Win" }, 14)] // 9 points + 5 bonus
-        [InlineData(new[] { "Win", "Draw", "Win" }, 7)]  // 7 points, pas de bonus
-        public void Should_Calculate_Score_Correctly(string[] results, intexpectedScore){ }
-
+            var score = _calculator.CalculateScore(matches);
+            score.Should().Be(expectedScore);
+        }
         #endregion
 
         #region Test du bonus de series 
 
-        [Fact]
-        // Tests avec bonus
-        public void Should_Add_Bonus_For_Three_Consecutive_Wins() { }
+        [Theory]
+        [InlineData(new[] { "Win", "Win", "Win" }, 14)] // 9 points + 5 bonus
+        [InlineData(new[] { "Win", "Win", "Win", "Win" }, 17)] // 17 points 
+        [InlineData(new[] { "Win", "Win", "Win", "Loss", "Win", "Win", "Win" }, 28)] // 28
+        [InlineData(new[] { "Win", "Win", "Win", "Loss", "Win", "Win", "Win", "Win" }, 31)] // 31
+        [InlineData(new[] { "Win", "Win", "Win", "Draw", "Win", "Win", "Win", "Win" }, 32)] // 32
+        [InlineData(new[] { "Win", "Win", "Win", "Draw", "Win", "Win", "Win" }, 29)] // 29
+        // Test du bonus pour trois victoires consécutives
+        public void CalculateScore_AddBonusForConsecutiveWins_ReturnsCorrectResult(string[] result, int expectedScore)
+        {
+            var matches = result.Select(r => new MatchResult(
+                r switch
+                {
+                    "Win" => MatchResult.Result.Win,
+                    "Draw" => MatchResult.Result.Draw,
+                    "Loss" => MatchResult.Result.Loss,
+                    _ => throw new ArgumentException("Invalid result")
+                }
+            )).ToList();
 
-        [Fact]
-        // Test du bonus mais avec 4 victoires
-        public void Should_Add_Bonus_For_Four_Consecutive_Wins() { }
 
-        [Fact]
-        // Test de pas mettre de bonus si interruption de série
-        public void Should_Not_Add_Bonus_When_Series_Broken() { }
-
-        [Fact]
-        // Test pour des bonus multiples 
-        public void Should_Add_Multiple_Bonuses_For_Consecutive_Wins() { }
-
-        [Fact]
-        // Test pour un bonus non accordé si la série est interrompue
-        public void Should_Not_Add_Bonus_When_Series_Interrupted() { }
+            var score = _calculator.CalculateScore(matches);
+            score.Should().Be(expectedScore);
+        }
 
         #endregion
 
         #region Test de disqualification
 
         [Fact]
-        // Test de disqualification avec un score positif
-        public void Should_Return_Zero_When_Disqualified_With_Positive_Score() { }
+        // Test de disqualification avec des résultats positifs
+        public void Should_Return_Zero_When_Disqualified_With_Positive_Score()
+        {
+            // Arrange
+            var matches = new List<MatchResult>
+            {
+                new MatchResult(MatchResult.Result.Win),
+                new MatchResult(MatchResult.Result.Draw),
+                new MatchResult(MatchResult.Result.Loss)
+            };
+
+            var calculator = new ScoreCalculator();
+
+            // Act
+            var score = calculator.CalculateScore(matches, isDisqualified: true);
+
+            // Assert
+            score.Should().Be(0);
+        }
 
         [Fact]
-        // Test de disqualification sans combat 
-        public void Should_Return_Zero_When_Disqualified_Without_Fight() { }
+        // Test de disqualification avec des résultats négatifs
+        public void Should_Return_Zero_When_Disqualified_Without_Fight()
+        {
+            // Arrange
+            var matches = new List<MatchResult>(); // Aucun match
+            var calculator = new ScoreCalculator();
+
+            // Act
+            var score = calculator.CalculateScore(matches, isDisqualified: true);
+
+            // Assert
+            score.Should().Be(0);
+        }
+
 
         #endregion
 
@@ -95,15 +126,57 @@ namespace BladeMatch.UnitTest
 
         [Fact]
         // Test des pénalités normales
-        public void Should_Apply_Normal_Penalty() { }
+        public void Should_Apply_Normal_Penalty() {
+            // Arrange
+            var matches = new List<MatchResult>
+            {
+                new MatchResult(MatchResult.Result.Win),
+                new MatchResult(MatchResult.Result.Draw) // 3 + 1 = 4
+            };
+            var calculator = new ScoreCalculator();
+
+            // Act
+            var score = calculator.CalculateScore(matches, isDisqualified: false, penaltyPoints: 1);
+
+            // Assert
+            score.Should().Be(3);
+        }
 
         [Fact]
         // Test des pénalités supérieures
-        public void Should_Apply_Higher_Penalty() { }
+        public void Should_Apply_Higher_Penalty() {
+            // Arrange
+            var matches = new List<MatchResult>
+            {
+                new MatchResult(MatchResult.Result.Win),
+                new MatchResult(MatchResult.Result.Win) // 6 points
+            };
+            var calculator = new ScoreCalculator();
+
+            // Act
+            var score = calculator.CalculateScore(matches, isDisqualified: false, penaltyPoints: 10);
+
+            // Assert
+            score.Should().Be(0); // Score jamais négatif
+        }
 
         [Fact]
         // Test des pénalités égales
-        public void Should_Apply_Equal_Penalty() { }
+        public void Should_Apply_Equal_Penalty() {
+            // Arrange
+            var matches = new List<MatchResult>
+            {
+                new MatchResult(MatchResult.Result.Win),
+                new MatchResult(MatchResult.Result.Loss) // 3 points
+            };
+            var calculator = new ScoreCalculator();
+
+            // Act
+            var score = calculator.CalculateScore(matches, isDisqualified: false, penaltyPoints: 3);
+
+            // Assert
+            score.Should().Be(0);
+        }
 
         #endregion
 
@@ -111,32 +184,125 @@ namespace BladeMatch.UnitTest
          
         [Fact]
         // Test pour un score final de zéro quand disqualified
-        public void Should_Return_Zero_When_Disqualified() { }
+        public void Should_Return_Zero_When_Disqualified() {
+            // Arrange
+            var matches = new List<MatchResult>
+            {
+                new MatchResult(MatchResult.Result.Win),
+                new MatchResult(MatchResult.Result.Draw)
+            };
+            var calculator = new ScoreCalculator();
+
+            // Act
+            var score = calculator.CalculateScore(matches, isDisqualified: true);
+
+            // Assert
+            score.Should().Be(0);
+        }
 
         [Fact]
         // Test pour un score non-négatif final
-        public void Should_Not_Allow_Negative_Final_Score() { }
+        public void Should_Not_Allow_Negative_Final_Score() {
+
+            // Arrange
+            var matches = new List<MatchResult>
+            {
+                new MatchResult(MatchResult.Result.Draw) // 1 point
+            };
+            var calculator = new ScoreCalculator();
+
+            // Act
+            var score = calculator.CalculateScore(matches, isDisqualified: false, penaltyPoints: 5);
+
+            // Assert
+            score.Should().Be(0); // Score jamais négatif
+        }
 
         [Fact]
         // Test pour une liste vide de combats
-        public void Should_Return_Zero_When_No_Fights() { }
+        public void Should_Return_Zero_When_No_Fights() {
+            // Arrange
+            var matches = new List<MatchResult>(); // liste vide
+            var calculator = new ScoreCalculator();
+
+            // Act
+            var score = calculator.CalculateScore(matches);
+
+            // Assert
+            score.Should().Be(0);
+        }
 
         [Fact]
         // Test pour une liste null de combats
-        public void Should_Return_Zero_When_Fights_Is_Null() { }
+        public void Should_Return_Zero_When_Fights_Is_Null() {
+            // Arrange
+            List<MatchResult> matches = null;
+            var calculator = new ScoreCalculator();
+
+            // Act
+            var score = calculator.CalculateScore(matches);
+
+            // Assert
+            score.Should().Be(0);
+
+        }
 
         [Fact]
         // Test pour une liste vide de résultats
-        public void Should_Return_Zero_When_Results_Are_Empty() { }
+        public void Should_Return_Zero_When_Results_Are_Empty() {
+            // Arrange
+            var matches = new List<MatchResult>(); // liste vide
+            var calculator = new ScoreCalculator();
+
+            // Act
+            var score = calculator.CalculateScore(matches);
+
+            // Assert
+            score.Should().Be(0);
+        }
 
         [Fact] 
         // Test avec des pénalités négatives 
-        public void Should_Not_Allow_Negative_Penalties() { }
+        public void Should_Not_Allow_Negative_Penalties() {
+
+            // Arrange
+            var matches = new List<MatchResult>
+            {
+                new MatchResult(MatchResult.Result.Win),
+                new MatchResult(MatchResult.Result.Draw) // score = 3 + 1 = 4
+            };
+            var calculator = new ScoreCalculator();
+
+            // Act
+            Action act = () => calculator.CalculateScore(matches, isDisqualified: false, penaltyPoints: -5);
+
+            // Assert
+            act.Should().Throw<ArgumentException>().WithMessage("*penalty*");
+        }
+
 
         [Fact]
         // Test pour un très long tournoi (>100 combats)    
-        public void Should_Handle_Long_Tournament_Without_Error() { }
-        
+        public void Should_Handle_Long_Tournament_Without_Error()
+        {
+            // Arrange
+            var matches = new List<MatchResult>();
+            for (int i = 0; i < 120; i++)
+            {
+                // Alternance entre victoires, matchs nuls et défaites
+                matches.Add(new MatchResult(i % 3 == 0 ? MatchResult.Result.Win :
+                                             i % 3 == 1 ? MatchResult.Result.Draw :
+                                                          MatchResult.Result.Loss));
+            }
+
+            var calculator = new ScoreCalculator();
+
+            // Act
+            var score = calculator.CalculateScore(matches);
+
+            // Assert
+            score.Should().BeGreaterThanOrEqualTo(0); // Le score doit être non-négatif
+        }
         #endregion
     }
 }

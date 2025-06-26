@@ -11,16 +11,23 @@ public class ScoreCalculator
     /// <param name="isDisqualified">True si le joueur est disqualifié</param>
     /// <param name="penaltyPoints">Points de pénalité (nombre positif)</param>
     /// <returns>Score final (jamais négatif)</returns>
-    
-    public int CalculateScore(List<MatchResult> matches, bool isDisqualified = false, int penaltyPoints = 0)
+
+    public int CalculateScore(List<MatchResult>? matches, bool isDisqualified = false, int penaltyPoints = 0)
     {
-        if (isDisqualified) {return 0;}
-        if  (matches.Count == 0) {return 0;}
+        if (penaltyPoints < 0)
+            throw new ArgumentException("penaltyPoints cannot be negative", nameof(penaltyPoints));
+
+        if (isDisqualified)
+            return 0;
+
+        if (matches == null || matches.Count == 0)
+            return 0;
 
         int score = 0;
+        int winStreak = 0;
+
         foreach (var match in matches)
         {
-            int winStreak = 0;
             switch (match.Outcome)
             {
                 case MatchResult.Result.Win:
@@ -33,17 +40,16 @@ public class ScoreCalculator
                     break;
                 case MatchResult.Result.Loss:
                     winStreak = 0;
-                    break;
-                default:
-                    break;
-            }
-
+                    break;}
             if (winStreak == 3)
             {
                 score += 5;
-            } 
+            }
         }
-        return score;
+
+        score -= penaltyPoints;
+        return Math.Max(score, 0); // pour garantir un score >= 0
     }
+
 
 }
