@@ -138,6 +138,5 @@ namespace BladeMatch.UnitTest
         public void Should_Handle_Long_Tournament_Without_Error() { }
         
         #endregion
-
     }
 }
