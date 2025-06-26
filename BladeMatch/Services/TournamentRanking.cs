@@ -21,7 +21,7 @@ public class TournamentRanking
 
         foreach (var player in players)
         {
-            player.Score = _scoreCalculator.CalculateScore(player.Matches);
+            player.Score = _scoreCalculator.CalculateScore(player.Matches, player.IsDisqualified, player.PenaltyPoints);
         }
         
         players.Sort((a, b) => b.Score.CompareTo(a.Score));
