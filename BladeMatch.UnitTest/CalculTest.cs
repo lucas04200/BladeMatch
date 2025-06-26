@@ -27,15 +27,16 @@ namespace BladeMatch.UnitTest
             yield return new object[] { new[] { "Win", "Draw", "Loss" }, 4 }; // 4 points
             yield return new object[] { new[] { "Win", "Win", "Draw" }, 7 }; // 6 + 1 draw
             yield return new object[] { new[] { "Loss", "Loss", "Loss" }, 0 }; // 0 points
+            yield return new object[] { new[] { "Win", "Win" }, 6 }; // 9 points
             yield return new object[] { new[] { "Win", "Draw", "Win" }, 7 }; // 7 points
-        }   
+        }
 
         #region test de calcul simple
         // Tests de base 
         [Theory]
         [MemberData(nameof(DataMatchesTest))]
         // Test sans bonus avec MemberData
-        public void CalculateScore_WithVariousInput(string[] results, int expectedScore)
+        public void CalculateScore_WithVariousInput_ReturnsExcpected(string[] results, int expectedScore)
         {
             var matches = results.Select(r => new MatchResult(
                 r switch
@@ -57,12 +58,14 @@ namespace BladeMatch.UnitTest
         [Theory]
         [InlineData(new[] { "Win", "Win", "Win" }, 14)] // 9 points + 5 bonus
         [InlineData(new[] { "Win", "Win", "Win", "Win" }, 17)] // 17 points 
+        [InlineData(new[] { "Win", "Win", "Loss", "Win" }, 9)] //  9 points
+        [InlineData(new[] { "Win", "Draw", "Win", "Win" }, 10)] // 9 points
         [InlineData(new[] { "Win", "Win", "Win", "Loss", "Win", "Win", "Win" }, 28)] // 28
         [InlineData(new[] { "Win", "Win", "Win", "Loss", "Win", "Win", "Win", "Win" }, 31)] // 31
         [InlineData(new[] { "Win", "Win", "Win", "Draw", "Win", "Win", "Win", "Win" }, 32)] // 32
         [InlineData(new[] { "Win", "Win", "Win", "Draw", "Win", "Win", "Win" }, 29)] // 29
         // Test du bonus pour trois victoires consécutives
-        public void CalculateScore_AddBonusForConsecutiveWins_ReturnsCorrectResult(string[] result, int expectedScore)
+        public void CalculateScore_AddBonusForConsecutiveWins_ReturnsExpected(string[] result, int expectedScore)
         {
             var matches = result.Select(r => new MatchResult(
                 r switch
@@ -85,7 +88,7 @@ namespace BladeMatch.UnitTest
 
         [Fact]
         // Test de disqualification avec des résultats positifs
-        public void Should_Return_Zero_When_Disqualified_With_Positive_Score()
+        public void CalculateScore_WhenDisqualified_ReturnsZero()
         {
             // Arrange
             var matches = new List<MatchResult>
@@ -105,8 +108,8 @@ namespace BladeMatch.UnitTest
         }
 
         [Fact]
-        // Test de disqualification avec des résultats négatifs
-        public void Should_Return_Zero_When_Disqualified_Without_Fight()
+        // Test de disqualification sans aucun match
+        public void CalculateScore_WhenDisqualifiedAndZeroMatch_ReturnsZero()
         {
             // Arrange
             var matches = new List<MatchResult>(); // Aucun match
@@ -126,7 +129,8 @@ namespace BladeMatch.UnitTest
 
         [Fact]
         // Test des pénalités normales
-        public void Should_Apply_Normal_Penalty() {
+        public void CalculateScore_WithOnePenalityPoint_ReturnsThree()
+        {
             // Arrange
             var matches = new List<MatchResult>
             {
@@ -144,7 +148,8 @@ namespace BladeMatch.UnitTest
 
         [Fact]
         // Test des pénalités supérieures
-        public void Should_Apply_Higher_Penalty() {
+        public void CalculateScore_WithHigherPenalityPoint_ReturnsZero()
+        {
             // Arrange
             var matches = new List<MatchResult>
             {
@@ -162,7 +167,8 @@ namespace BladeMatch.UnitTest
 
         [Fact]
         // Test des pénalités égales
-        public void Should_Apply_Equal_Penalty() {
+        public void CalculateScore_WithEqualPenalityPointAndScore_ReturnsZero()
+        {
             // Arrange
             var matches = new List<MatchResult>
             {
@@ -181,10 +187,11 @@ namespace BladeMatch.UnitTest
         #endregion
 
         #region Tests des cas limites
-         
+
         [Fact]
         // Test pour un score final de zéro quand disqualified
-        public void Should_Return_Zero_When_Disqualified() {
+        public void CalculateScore_WithDisqualification_ReturnsZero()
+        {
             // Arrange
             var matches = new List<MatchResult>
             {
@@ -201,8 +208,9 @@ namespace BladeMatch.UnitTest
         }
 
         [Fact]
-        // Test pour un score non-négatif final
-        public void Should_Not_Allow_Negative_Final_Score() {
+        // Test pour un score négatif final
+        public void CalculateScore_WithNegativeFinalScore_ReturnsZero()
+        {
 
             // Arrange
             var matches = new List<MatchResult>
@@ -220,7 +228,8 @@ namespace BladeMatch.UnitTest
 
         [Fact]
         // Test pour une liste vide de combats
-        public void Should_Return_Zero_When_No_Fights() {
+        public void CalculateScore_WithZeroMatche_ReturnsZero()
+        {
             // Arrange
             var matches = new List<MatchResult>(); // liste vide
             var calculator = new ScoreCalculator();
@@ -234,7 +243,8 @@ namespace BladeMatch.UnitTest
 
         [Fact]
         // Test pour une liste null de combats
-        public void Should_Return_Zero_When_Fights_Is_Null() {
+        public void CalculateScore_WithNullMatche_ReturnsZero()
+        {
             // Arrange
             List<MatchResult> matches = null;
             var calculator = new ScoreCalculator();
@@ -248,22 +258,9 @@ namespace BladeMatch.UnitTest
         }
 
         [Fact]
-        // Test pour une liste vide de résultats
-        public void Should_Return_Zero_When_Results_Are_Empty() {
-            // Arrange
-            var matches = new List<MatchResult>(); // liste vide
-            var calculator = new ScoreCalculator();
-
-            // Act
-            var score = calculator.CalculateScore(matches);
-
-            // Assert
-            score.Should().Be(0);
-        }
-
-        [Fact] 
         // Test avec des pénalités négatives 
-        public void Should_Not_Allow_Negative_Penalties() {
+        public void CalculateScore_WithNegativesPenalities_ReturnsArgumentException()
+        {
 
             // Arrange
             var matches = new List<MatchResult>
@@ -283,7 +280,7 @@ namespace BladeMatch.UnitTest
 
         [Fact]
         // Test pour un très long tournoi (>100 combats)    
-        public void Should_Handle_Long_Tournament_Without_Error()
+        public void CalculateScore_WithLongTournament_ReturnsZero()
         {
             // Arrange
             var matches = new List<MatchResult>();
@@ -304,5 +301,6 @@ namespace BladeMatch.UnitTest
             score.Should().BeGreaterThanOrEqualTo(0); // Le score doit être non-négatif
         }
         #endregion
+
     }
 }
